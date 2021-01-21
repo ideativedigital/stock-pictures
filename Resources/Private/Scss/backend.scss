@@ -1,0 +1,21 @@
+.stock-pictures-results {
+    .result-item {
+        padding: 8px;
+        text-align: center;
+        cursor: pointer;
+        img {
+            max-width: 100%;
+            height: auto;
+            border: 3px solid white;
+        }
+        &:hover img, &.active img {
+            border-color: blue;
+        }
+    }
+}
+
+
+.search-summary {
+    margin-top: 1em;
+    margin-bottom: 1em;
+} 
