@@ -1,6 +1,6 @@
 {
 	"name": "ideative/stock-pictures",
-	"version": "10.0.2",
+	"version": "10.0.3",
 	"type": "typo3-cms-extension",
 	"description": "Allows backend users to select stock pictures from various online services",
 	"autoload": {
