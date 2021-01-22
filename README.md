@@ -7,7 +7,7 @@ To get started quickly, you can use one of the following extensions :
 - https://github.com/ideativedigital/unsplash-connector
 
 ### Installation
-Install this extension via `composer require ideativedigital/stock-pictures` or download it from the TYPO3 Extension Repository and activate the extension in the Extension Manager of your TYPO3 installation.
+Install this extension via `composer require ideative/stock-pictures` or download it from the TYPO3 Extension Repository and activate the extension in the Extension Manager of your TYPO3 installation.
 
 ### Registering a new stock picture service
 ```$GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['id_stock_pictures'['connectors']['myservice'] = \Acme\MyExtension\Connector\MyServiceConnector::class```
