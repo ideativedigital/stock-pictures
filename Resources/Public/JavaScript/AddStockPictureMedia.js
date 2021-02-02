@@ -111,6 +111,11 @@ define([
                 })
 
                 self.toggleLoading(true)
+
+                // Enable all filters
+                $.default('[name="stockpictures-form"]')
+                    .find('input, select')
+                    .prop('disabled', '')
                 
                 // Make the "page" parameter available in the query params we'll be sending
                 searchData.page = self.currentPage
@@ -128,11 +133,13 @@ define([
                                 // Clear the results area, only if we started a new search
                                 // Else this is the infinite scroll so keep the previous items
                                 if (page == 1) {
-                                    $searchSummary.html('Found ' + data.result.totalCount + ' results for keywords <em>"' + searchData.q + '"</em>')
+                                    const keywordsLabel = typeof(searchData.q) !== 'undefined' && searchData.q ? ' for keywords <em>' + searchData.q + '</em>' : ''; 
+                                    $searchSummary.html('Found ' + data.result.totalCount + ' results' + keywordsLabel)
                                     $resultsList.html('')
                                     $resultsList.css({height: 'auto'})
                                 }
                                 self.renderList(data.result.data)
+                                self.toggleFilters(data.result)
                             }
                             else if (data.result.message) {
                                 $searchSummary.html('<p class="text-danger">' + data.result.message + '</p>')
@@ -144,6 +151,22 @@ define([
                             self.toggleLoading(false)
                         }
                     })
+            }
+
+            /**
+             * If the results ask us to disable some filters, do it
+             * @param result
+             */
+            toggleFilters(result) {
+                if (result.disabledFilters && result.disabledFilters.length > 0) {                    
+                    // Disable each filter based on the AJAX response
+                    for (let i in result.disabledFilters) {
+                        let $filterInput = $.default('[name="' + result.disabledFilters[i] + '"]');
+                        $filterInput
+                            .val('')
+                            .prop('disabled', 'disabled')
+                    }
+                }
             }
 
             /**
@@ -203,7 +226,7 @@ define([
 
                     // Trigger the search when changing a select
                     let $select = $.default('<select name="' + filterType + '" class="form-control"></select>')
-                        .on('change', (e) => {
+                        .on('change', (e) => {                            
                             self.currentPage = 1
                             self.search(1)
                         })

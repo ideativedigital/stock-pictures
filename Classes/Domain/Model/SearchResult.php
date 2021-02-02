@@ -21,4 +21,7 @@ class SearchResult {
     public $success = false;
 
     public $message = '';
+    
+    /** @var array  */
+    public $disabledFilters = [];
 }
