@@ -169,6 +169,12 @@ define([
                         .attr('type', 'text')
                         .attr('class', 'form-control stockpictures-media-url')
                         .attr('placeholder', placeholder)
+                        .on('keypress', (e) => {
+                            // Prevent submitting the form with enter
+                            if (e.keyCode === 13) {
+                                e.preventDefault()
+                            }
+                        })
                         // Bind search event to the text input
                         .on('keyup', self.debounce((e) => {
                             self.currentPage = 1
