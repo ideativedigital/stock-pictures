@@ -19,7 +19,7 @@ use TYPO3\CMS\Extbase\Object\ObjectManager;
 
 class SearchController
 {
-    public function process(ServerRequestInterface $request): ResponseInterface
+    public function process(ServerRequestInterface $request, Response $response): ResponseInterface
     {
         $requestConnector = $request->getQueryParams()['connector'] ?? null;
         // List of GET params that should not be transmitted to the search function
@@ -44,8 +44,7 @@ class SearchController
         }
         
         $data = [ 'result' => $result ];
-        $response = GeneralUtility::makeInstance(ResponseFactory::class)->createResponse()
-            ->withHeader('Content-Type', 'application/json; charset=utf-8');
+        $response = $response->withHeader('Content-Type', 'application/json; charset=utf-8');
         $response->getBody()->write(json_encode($data));
         return $response;
     }

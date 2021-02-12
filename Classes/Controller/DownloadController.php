@@ -54,7 +54,7 @@ class DownloadController implements LoggerAwareInterface
      * @return ResponseInterface
      * @throws \TYPO3\CMS\Extbase\Object\Exception
      */
-    public function process(ServerRequestInterface $request): ResponseInterface
+    public function process(ServerRequestInterface $request, Response $response): ResponseInterface
     {
         $requestConnector = $request->getParsedBody()['connector'] ?? null;
         // List of GET params that should not be transmitted to the search function
@@ -69,7 +69,7 @@ class DownloadController implements LoggerAwareInterface
             foreach ($registeredConnectors as $connectorName => $connectorClassName) {
                 $connector = $this->objectManager->get($connectorClassName);
                 if ($connector instanceof ConnectorInterface && $connectorName === $requestConnector) {
-                    $id = $params['id'] ?? $request->getQueryParams()['id'];
+                    $id = $params['itemId'] ?? $request->getQueryParams()['itemId'];
                     
                     if ($id) {
                         $fileInfo = $connector->getFileUrlAndExtension($id);
@@ -96,8 +96,7 @@ class DownloadController implements LoggerAwareInterface
             $result['error'] = LocalizationUtility::translate('error.invalid_connector_given', 'id_stock_pictures');
         }
 
-        $response = GeneralUtility::makeInstance(ResponseFactory::class)->createResponse()
-            ->withHeader('Content-Type', 'application/json; charset=utf-8');
+        $response = $response->withHeader('Content-Type', 'application/json; charset=utf-8');
         $response->getBody()->write(json_encode($result));
         return $response;
     }

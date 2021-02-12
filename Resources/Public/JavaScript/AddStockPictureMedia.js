@@ -102,7 +102,7 @@ define([
                 const self = this
                 const $resultsList = modal.currentModal.find('.stock-pictures-results')
                 const $searchSummary = modal.currentModal.find('.search-summary')
-                
+
                 // Convert the form data into a JSON object
                 const form = modal.currentModal.find('form')[0]
                 var searchData = {};
@@ -116,32 +116,29 @@ define([
                 $.default('[name="stockpictures-form"]')
                     .find('input, select')
                     .prop('disabled', '')
-                
+
                 // Make the "page" parameter available in the query params we'll be sending
                 searchData.page = self.currentPage
 
-                new ajaxRequest(TYPO3.settings.ajaxUrls.id_stock_pictures_search)
-                    .withQueryArguments(searchData)
-                    .get()
-                    .then(async function (response) {
-                        const data = await response.resolve()
-
+                $.default.ajax(TYPO3.settings.ajaxUrls.id_stock_pictures_search, {
+                    data: searchData,
+                    success: function (data) {
+                        console.log(data)
                         if (data.result) {
                             if (data.result.data) {
                                 self.reachedPaginationEnd = (data.result.data.length === 0)
-                                
+
                                 // Clear the results area, only if we started a new search
                                 // Else this is the infinite scroll so keep the previous items
                                 if (page == 1) {
-                                    const keywordsLabel = typeof(searchData.q) !== 'undefined' && searchData.q ? ' for keywords <em>' + searchData.q + '</em>' : ''; 
+                                    const keywordsLabel = typeof (searchData.q) !== 'undefined' && searchData.q ? ' for keywords <em>' + searchData.q + '</em>' : '';
                                     $searchSummary.html('Found ' + data.result.totalCount + ' results' + keywordsLabel)
                                     $resultsList.html('')
                                     $resultsList.css({height: 'auto'})
                                 }
                                 self.renderList(data.result.data)
                                 self.toggleFilters(data.result)
-                            }
-                            else if (data.result.message) {
+                            } else if (data.result.message) {
                                 $searchSummary.html('<p class="text-danger">' + data.result.message + '</p>')
                                 self.toggleLoading(false)
                             }
@@ -150,9 +147,9 @@ define([
                             $searchSummary.html('')
                             self.toggleLoading(false)
                         }
-                    })
+                    }
+                })
             }
-
             /**
              * If the results ask us to disable some filters, do it
              * @param result
@@ -262,44 +259,44 @@ define([
                 
                 nprogress.start()
 
-                new ajaxRequest(TYPO3.settings.ajaxUrls.id_stock_pictures_download)
-                    .post({
+                $.default.post(
+                    TYPO3.settings.ajaxUrls.id_stock_pictures_download,
+                    {
                         connector: connector,
-                        id: $selectedImage.data('id'),
+                        itemId: $selectedImage.data('id'),
                         targetFolder: targetFolder
-                    }).then(async e => {
-                    const data = await e.resolve()
-                    if (data.file) {
-                        // If file was successfully downloaded and added to the FAL, trigger the creation of the file reference
-                        const e = {
-                            actionName: 'typo3:foreignRelation:insert',
-                            objectGroup: fileIrreObject,
-                            table: 'sys_file',
-                            uid: data.file
+                    },
+                    function(data) {
+                        if (data.file) {
+                            // If file was successfully downloaded and added to the FAL, trigger the creation of the file reference
+                            window.inline.delayedImportElement(
+                                fileIrreObject, 
+                                "sys_file",
+                                data.file, 
+                                "file"
+                            )
+                            // ... and hide the search box
+                            modal.currentModal.modal('hide')
+                        } else {
+                            const confirm = modal.confirm(
+                                'ERROR',
+                                data.error,
+                                severity.error,
+                                [
+                                    {
+                                        text: TYPO3.lang['button.ok'] || 'OK',
+                                        btnClass: 'btn-' + severity.getCssClass(severity.error),
+                                        name: 'ok',
+                                        active: !0
+                                    }
+                                ])
+                                .on('confirm.button.ok', () => {
+                                    confirm.modal('hide')
+                                })
                         }
-                        messageUtility.MessageUtility.send(e)
-                        // ... and hide the search box
-                        modal.currentModal.modal('hide')
-                    } else {
-                        const confirm = modal.confirm(
-                            'ERROR',
-                            data.error,
-                            severity.error,
-                            [
-                                {
-                                    text: TYPO3.lang['button.ok'] || 'OK',
-                                    btnClass: 'btn-' + severity.getCssClass(severity.error),
-                                    name: 'ok',
-                                    active: !0
-                                }
-                            ])
-                            .on('confirm.button.ok', () => {
-                                confirm.modal('hide')
-                            })
-                    }
-                    $submitButton.find('.icon').remove()
-                    $submitButton.removeAttr('disabled')
-                    nprogress.done()
+                        $submitButton.find('.icon').remove()
+                        $submitButton.removeAttr('disabled')
+                        nprogress.done()
                 })
             }
 

@@ -81,7 +81,7 @@ class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineCon
             'data-file-irre-object' => htmlspecialchars($objectPrefix),
             'data-target-folder' => htmlspecialchars($folder->getCombinedIdentifier()),
             'data-connector' => $connectorName,
-            'data-available-filters' => GeneralUtility::jsonEncodeForHtmlAttribute($connector->getAvailableFilters())
+            'data-available-filters' => self::jsonEncodeForHtmlAttribute($connector->getAvailableFilters())
         ];
         $buttonAttributes = array_merge($buttonAttributes, $connector->getAddButtonAttributes());
         
@@ -97,6 +97,17 @@ class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineCon
                     ' . $connector->getAddButtonLabel() .
                 '</button>
                ';
+    }
+
+    /**
+     * @param mixed $value
+     * @param bool $useHtmlEntities
+     * @return string
+     */
+    public static function jsonEncodeForHtmlAttribute($value, bool $useHtmlEntities = true): string
+    {
+        $json = (string)json_encode($value, JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG);
+        return $useHtmlEntities ? htmlspecialchars($json) : $json;
     }
     
     /**
