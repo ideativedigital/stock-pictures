@@ -4,10 +4,8 @@ define([
         'require',
         'exports',
         'jquery',
-        'TYPO3/CMS/Backend/Utility/MessageUtility',
         'TYPO3/CMS/Backend/Enum/KeyTypes',
         'nprogress',
-        'TYPO3/CMS/Core/Ajax/AjaxRequest',
         'TYPO3/CMS/Core/SecurityUtility',
         'TYPO3/CMS/Backend/Modal',
         'TYPO3/CMS/Backend/Severity',
@@ -15,7 +13,7 @@ define([
         'masonry',
         'imagesLoaded'
     ],
-    (function (e, exports, $, messageUtility, n, nprogress, ajaxRequest, o, modal, severity, icons, masonry, imagesLoaded) {
+    (function (e, exports, $, n, nprogress, o, modal, severity, icons, masonry, imagesLoaded) {
         'use strict'
         $ = __importDefault($)
         return new class {
@@ -76,14 +74,14 @@ define([
                     self.toggleLoading(false)
                     // Display the new loaded images gracefully
                     $.default(grid).find('.result-item').fadeIn()
-                    
+
                     // init Isotope after all images have loaded
                     let msnry = new masonry(grid, {
                         itemSelector: '.result-item'
                     })
                 })
             }
-            
+
             toggleLoading(status) {
                 const self = this
                 const $loadingContainer = modal.currentModal.find('.loading-container')
@@ -155,7 +153,7 @@ define([
              * @param result
              */
             toggleFilters(result) {
-                if (result.disabledFilters && result.disabledFilters.length > 0) {                    
+                if (result.disabledFilters && result.disabledFilters.length > 0) {
                     // Disable each filter based on the AJAX response
                     for (let i in result.disabledFilters) {
                         let $filterInput = $.default('[name="' + result.disabledFilters[i] + '"]');
@@ -182,7 +180,7 @@ define([
                 // Add a hidden input containing the connector name : that means the AJAX call will search in this service's API
                 const $connectorInput = $.default('<input type="hidden" name="connector">').val(connector)
                 $searchContainer.append($connectorInput)
-                
+
                 // Add the text search input
                 const $searchInput = $.default('<div class="form-group"></div>').append(
                     $.default('<input name="q" id="search-term">')
@@ -223,7 +221,7 @@ define([
 
                     // Trigger the search when changing a select
                     let $select = $.default('<select name="' + filterType + '" class="form-control"></select>')
-                        .on('change', (e) => {                            
+                        .on('change', (e) => {
                             self.currentPage = 1
                             self.search(1)
                         })
@@ -256,7 +254,7 @@ define([
                     $submitButton.prepend(icon)
                     $submitButton.attr('disabled', 'disabled')
                 })
-                
+
                 nprogress.start()
 
                 $.default.post(
@@ -270,9 +268,9 @@ define([
                         if (data.file) {
                             // If file was successfully downloaded and added to the FAL, trigger the creation of the file reference
                             window.inline.delayedImportElement(
-                                fileIrreObject, 
+                                fileIrreObject,
                                 "sys_file",
-                                data.file, 
+                                data.file,
                                 "file"
                             )
                             // ... and hide the search box
@@ -297,7 +295,7 @@ define([
                         $submitButton.find('.icon').remove()
                         $submitButton.removeAttr('disabled')
                         nprogress.done()
-                })
+                    })
             }
 
             /**
@@ -320,29 +318,29 @@ define([
                     .append($resultsContainer)
 
                 modal.advanced({
-                        title: $target.attr('title'),
-                        content: modalContent,
-                        severity: severity.notice,
-                        size: modal.sizes.full,
-                        buttons: [
-                            {
-                                btnClass: 'btn btn-default',
-                                text: cancel,
-                                name: 'cancel',
-                                trigger: () => {
-                                    modal.currentModal.trigger('modal-dismiss')
-                                }
-                            },
-                            {
-                                btnClass: 'btn btn-primary',
-                                text: title,
-                                name: 'ok',
-                                trigger: () => {
-                                    self.submit(connector, targetFolder, fileIrreObject)
-                                }
+                    title: $target.attr('title'),
+                    content: modalContent,
+                    severity: severity.notice,
+                    size: modal.sizes.full,
+                    buttons: [
+                        {
+                            btnClass: 'btn btn-default',
+                            text: cancel,
+                            name: 'cancel',
+                            trigger: () => {
+                                modal.currentModal.trigger('modal-dismiss')
                             }
-                        ]
-                    })
+                        },
+                        {
+                            btnClass: 'btn btn-primary',
+                            text: title,
+                            name: 'ok',
+                            trigger: () => {
+                                self.submit(connector, targetFolder, fileIrreObject)
+                            }
+                        }
+                    ]
+                })
                     .on('shown.bs.modal', e => {
                         // Focus on the search input when opening the modal
                         $.default(e.currentTarget).find('input[name="q"]').first().focus()
