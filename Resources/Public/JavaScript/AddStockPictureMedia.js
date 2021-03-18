@@ -12,8 +12,8 @@ define([
         'TYPO3/CMS/Backend/Modal',
         'TYPO3/CMS/Backend/Severity',
         'TYPO3/CMS/Backend/Icons',
-        'masonry',
-        'imagesLoaded'
+        'TYPO3/CMS/IdStockPictures/masonry.pkgd.min',
+        'TYPO3/CMS/IdStockPictures/imagesLoaded.pkgd.min'
     ],
     (function (e, exports, $, messageUtility, n, nprogress, ajaxRequest, o, modal, severity, icons, masonry, imagesLoaded) {
         'use strict'
