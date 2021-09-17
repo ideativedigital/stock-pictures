@@ -2,15 +2,15 @@
 
 namespace Ideative\IdStockPictures;
 
-use TYPO3\CMS\Core\Resource\Folder;
+use Ideative\IdStockPictures\Domain\Model\SearchResult;
 
 interface ConnectorInterface {
     /**
      * Searches through the service's API with the given params
      * @param array $params
-     * @return array
+     * @return SearchResult
      */
-    public function search(array $params);
+    public function search(array $params): SearchResult;
 
     /**
      * Downloads the HD file from the service
@@ -24,19 +24,19 @@ interface ConnectorInterface {
      * Returns the additional attributes added to the "Add media button", so they can be used in Javascript later
      * @return array
      */
-    public function getAddButtonAttributes();
+    public function getAddButtonAttributes(): array;
 
     /**
      * Returns the markup for the icon of the "Add media" button
      * @return string
      */
-    public function getAddButtonIcon();
+    public function getAddButtonIcon(): string;
     
     /**
      * Returns the label of the "Add media" button
      * @return string|null
      */
-    public function getAddButtonLabel();
+    public function getAddButtonLabel(): ?string;
 
     /**
      * Returns a list of available filters in the search form

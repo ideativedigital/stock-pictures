@@ -224,19 +224,37 @@ define([
                     let filterData = availableFilters[filterType]
                     let $formGroup = $.default('<div class="form-group col-md-3"><label>' + filterData.label + '</label></div>')
 
-                    // Trigger the search when changing a select
-                    let $select = $.default('<select name="' + filterType + '" class="form-control"></select>')
-                        .on('change', (e) => {                            
-                            self.currentPage = 1
-                            self.search(1)
-                        })
+                    if (filterData.tag && filterData.tag === 'checkbox') {
+                        // Trigger the search when changing a checkbox
+                        for (let index in filterData.options) {
+                            const optionValue = filterData.options[index].value
+                            const optionLabel = filterData.options[index].label
+                            let $element = $.default('<div class="form-check form-switch">')
+                            let $input = $.default('<input type="checkbox" name="' + filterType + '[' + index + ']" class="form-check-input" value="' + optionValue + '">')
+                                .on('change', (e) => {
+                                    self.currentPage = 1
+                                    self.search(1)
+                                })
+                            $element.append($input)
+                            $element.append('<label class="form-check-label">' + optionLabel + '</label>')
+                            $element.append('</div>')
+                            $formGroup.append($element)
+                        }
+                    } else {
+                        // Trigger the search when changing a select
+                        let $select = $.default('<select name="' + filterType + '" class="form-control"></select>')
+                            .on('change', (e) => {
+                                self.currentPage = 1
+                                self.search(1)
+                            })
 
-                    for (let index in filterData.options) {
-                        let optionValue = filterData.options[index].value
-                        let optionLabel = filterData.options[index].label
-                        $select.append('<option value="' + optionValue + '">' + optionLabel + '</option>')
+                        for (let index in filterData.options) {
+                            let optionValue = filterData.options[index].value
+                            let optionLabel = filterData.options[index].label
+                            $select.append('<option value="' + optionValue + '">' + optionLabel + '</option>')
+                        }
+                        $formGroup.append($select)
                     }
-                    $formGroup.append($select)
                     $filtersContainer.append($formGroup)
                 }
                 return $filtersContainer

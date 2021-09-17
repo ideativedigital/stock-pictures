@@ -19,6 +19,10 @@ use TYPO3\CMS\Extbase\Object\ObjectManager;
 
 class SearchController
 {
+	/**
+	 * @param ServerRequestInterface $request
+	 * @return ResponseInterface
+	 */
     public function process(ServerRequestInterface $request): ResponseInterface
     {
         $requestConnector = $request->getQueryParams()['connector'] ?? null;
@@ -27,26 +31,23 @@ class SearchController
         
         $result = null;
         if ($requestConnector) {
-            // Browse each service connector and add its corresponding button
-            $registeredConnectors = $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['id_stock_pictures']['connectors'];
-            $objectManager = GeneralUtility::makeInstance(ObjectManager::class);
+	        $connectorClassName = $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['id_stock_pictures']['connectors'][$requestConnector] ?? '';
+	        if ($connectorClassName) {
+		        $params = array_filter($request->getQueryParams(), static function ($param) use ($paramsBlackList) {
+			        return !in_array($param, $paramsBlackList, true);
+		        }, ARRAY_FILTER_USE_KEY);
 
-            $params = array_filter($request->getQueryParams(), function($param) use ($paramsBlackList) {
-                return !in_array($param, $paramsBlackList);
-            }, ARRAY_FILTER_USE_KEY);
-            
-            foreach ($registeredConnectors as $connectorName => $connectorClassName) {
-                $connector = $objectManager->get($connectorClassName);
-                if ($connector instanceof ConnectorInterface && $connectorName === $requestConnector) {
-                    $result = $connector->search($params);
-                }
-            }
+		        $connector = GeneralUtility::makeInstance($connectorClassName);
+		        if ($connector instanceof ConnectorInterface) {
+			        $result = $connector->search($params);
+		        }
+	        }
         }
         
-        $data = [ 'result' => $result ];
+        $data = ['result' => $result];
         $response = GeneralUtility::makeInstance(ResponseFactory::class)->createResponse()
             ->withHeader('Content-Type', 'application/json; charset=utf-8');
-        $response->getBody()->write(json_encode($data));
+        $response->getBody()->write(json_encode($data, JSON_THROW_ON_ERROR));
         return $response;
     }
 

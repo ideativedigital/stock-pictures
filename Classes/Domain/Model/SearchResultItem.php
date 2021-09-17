@@ -4,8 +4,8 @@ namespace Ideative\IdStockPictures\Domain\Model;
 
 class SearchResultItem {
     /** @var string */
-    public $id;
+    public string $id;
     
     /** @var string */
-    public $preview;
+    public string $preview;
 }

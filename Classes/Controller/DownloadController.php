@@ -2,49 +2,37 @@
 
 namespace Ideative\IdStockPictures\Controller;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Psr7\Request;
 use Ideative\IdStockPictures\ConnectorInterface;
-use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\MiddlewareInterface;
-use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Symfony\Component\Mime\MimeTypes;
-use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
-use TYPO3\CMS\Core\Http\Response;
 use TYPO3\CMS\Core\Http\ResponseFactory;
 use TYPO3\CMS\Core\Log\LogManager;
 use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
-use TYPO3\CMS\Core\Resource\StorageRepository;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Extbase\Object\ObjectManager;
 use TYPO3\CMS\Extbase\Utility\LocalizationUtility;
 
 class DownloadController implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
 
-    /** @var ObjectManager $objectManager */
-    protected $objectManager;
-
     /** @var ResourceFactory $resourceFactory */
-    protected $resourceFactory;
+    protected ResourceFactory $resourceFactory;
 
     /**
      * List of GET/POST params that should be ignored
      * @var string[]
      */
-    protected $paramsBlackList = [ 'route', 'token', 'connector' ];
+    protected array $paramsBlackList = [ 'route', 'token', 'connector' ];
+
+
 
     public function __construct()
     {
-        $this->objectManager = GeneralUtility::makeInstance(ObjectManager::class);
-        $this->resourceFactory = $this->objectManager->get(ResourceFactory::class);
+        $this->resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
         $this->setLogger(GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__));
     }
 
@@ -61,44 +49,38 @@ class DownloadController implements LoggerAwareInterface
 
         $result = [];
         if ($requestConnector) {
-            // Browse each service connector and add its corresponding button
-            $registeredConnectors = $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['id_stock_pictures']['connectors'];
-
-            $params = $this->getFilteredParams($request->getParsedBody());
-
-            foreach ($registeredConnectors as $connectorName => $connectorClassName) {
-                $connector = $this->objectManager->get($connectorClassName);
-                if ($connector instanceof ConnectorInterface && $connectorName === $requestConnector) {
-                    $id = $params['id'] ?? $request->getQueryParams()['id'];
-                    
-                    if ($id) {
-                        $fileInfo = $connector->getFileUrlAndExtension($id);
-
-                        $file = $this->downloadFile($fileInfo, $params['targetFolder'], $id, $connectorName);
-                        if ($file) {
-                            $result = [
-                                'file' => $file->getUid()
-                            ];
-                        } else {
-                            $result['error'] = LocalizationUtility::translate(
-                                'error.file_download_failed',
-                                'id_stock_pictures',
-                                [ ucfirst($connectorName) ]
-                            );
-                        }
-                    }
-                    else {
-                        $result['error'] = LocalizationUtility::translate('error.no_file_given', 'id_stock_pictures');
-                    }
-                }
-            }
+	        $connectorClassName = $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['id_stock_pictures']['connectors'][$requestConnector] ?? '';
+	        if ($connectorClassName) {
+		        $params = $this->getFilteredParams($request->getParsedBody());
+				$connector = GeneralUtility::makeInstance($connectorClassName);
+		        if ($connector instanceof ConnectorInterface) {
+			        $id = $params['id'] ?? $request->getQueryParams()['id'];
+			        if ($id) {
+				        $fileInfo = $connector->getFileUrlAndExtension($id);
+				        $file = $this->downloadFile($fileInfo, $params['targetFolder'], $id, $requestConnector);
+				        if ($file) {
+					        $result = [
+						        'file' => $file->getUid()
+					        ];
+				        } else {
+					        $result['error'] = LocalizationUtility::translate(
+						        'error.file_download_failed',
+						        'id_stock_pictures',
+						        [ucfirst($requestConnector)]
+					        );
+				        }
+			        } else {
+				        $result['error'] = LocalizationUtility::translate('error.no_file_given', 'id_stock_pictures');
+			        }
+		        }
+	        }
         } else {
             $result['error'] = LocalizationUtility::translate('error.invalid_connector_given', 'id_stock_pictures');
         }
 
         $response = GeneralUtility::makeInstance(ResponseFactory::class)->createResponse()
             ->withHeader('Content-Type', 'application/json; charset=utf-8');
-        $response->getBody()->write(json_encode($result));
+        $response->getBody()->write(json_encode($result, JSON_THROW_ON_ERROR));
         return $response;
     }
 
@@ -111,7 +93,7 @@ class DownloadController implements LoggerAwareInterface
     {
         $paramsBlackList = $this->paramsBlackList;
         return array_filter($params, function ($param) use ($paramsBlackList) {
-            return !in_array($param, $paramsBlackList);
+            return !in_array($param, $paramsBlackList, true);
         }, ARRAY_FILTER_USE_KEY);
     }
 
@@ -133,7 +115,7 @@ class DownloadController implements LoggerAwareInterface
      * @param string $connectorName
      * @return File
      */
-    public function downloadFile(array $fileInfo, string $targetFolder, string $id, string $connectorName)
+    public function downloadFile(array $fileInfo, string $targetFolder, string $id, string $connectorName): File
     {
         if (!$targetFolder) {
             $this->logger->critical(sprintf(
@@ -168,7 +150,7 @@ class DownloadController implements LoggerAwareInterface
             } catch (\Exception $e) {
                 $this->logger->critical(sprintf(
                     'An exception occured while trying to download file from "%s". Exception : %s',
-                    $url,
+	                $fileName,
                     $e->getMessage()
                 ));
             }
@@ -206,5 +188,4 @@ class DownloadController implements LoggerAwareInterface
     {
         return $this->paramsBlackList;
     }
-
 }
