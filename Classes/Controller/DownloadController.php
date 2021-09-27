@@ -3,6 +3,7 @@
 namespace Ideative\IdStockPictures\Controller;
 
 use Ideative\IdStockPictures\ConnectorInterface;
+use phpDocumentor\Reflection\Types\Nullable;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerAwareInterface;
@@ -36,12 +37,11 @@ class DownloadController implements LoggerAwareInterface
         $this->setLogger(GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__));
     }
 
-    /**
-     *
-     * @param ServerRequestInterface $request
-     * @return ResponseInterface
-     * @throws \TYPO3\CMS\Extbase\Object\Exception
-     */
+	/**
+	 * @param ServerRequestInterface $request
+	 * @return ResponseInterface
+	 * @throws \JsonException
+	 */
     public function process(ServerRequestInterface $request): ResponseInterface
     {
         $requestConnector = $request->getParsedBody()['connector'] ?? null;
@@ -89,7 +89,7 @@ class DownloadController implements LoggerAwareInterface
      * @param array $params
      * @return array|bool
      */
-    public function getFilteredParams(array $params)
+    public function getFilteredParams(array $params): bool|array
     {
         $paramsBlackList = $this->paramsBlackList;
         return array_filter($params, function ($param) use ($paramsBlackList) {
@@ -97,25 +97,26 @@ class DownloadController implements LoggerAwareInterface
         }, ARRAY_FILTER_USE_KEY);
     }
 
-    /**
-     * @param $mimeType
-     * @return mixed|string|null
-     */
-    public function mimeTypeToExtension($mimeType)
+	/**
+	 * @param $mimeType
+	 * @return mixed
+	 */
+    public function mimeTypeToExtension($mimeType): mixed
     {
         $mimes = (new MimeTypes())->getExtensions($mimeType);
         return !empty($mimes[0]) ? $mimes[0] : '';
     }
 
-    /**
-     * Downloads the file from the given URL and stores it in the given target folder
-     * @param array $fileInfo
-     * @param string $targetFolder
-     * @param string $id
-     * @param string $connectorName
-     * @return File
-     */
-    public function downloadFile(array $fileInfo, string $targetFolder, string $id, string $connectorName): File
+	/**
+	 * Downloads the file from the given URL and stores it in the given target folder
+	 *
+	 * @param array $fileInfo
+	 * @param string $targetFolder
+	 * @param string $id
+	 * @param string $connectorName
+	 * @return File|\TYPO3\CMS\Core\Resource\ProcessedFile|null
+	 */
+    public function downloadFile(array $fileInfo, string $targetFolder, string $id, string $connectorName): File|\TYPO3\CMS\Core\Resource\ProcessedFile|null
     {
         if (!$targetFolder) {
             $this->logger->critical(sprintf(
@@ -171,12 +172,11 @@ class DownloadController implements LoggerAwareInterface
         return $this->resourceFactory;
     }
 
-    /**
-     * Wrapper for unit testing
-     * @param $url
-     * @return false|mixed|string
-     */
-    public function getUrl($url)
+	/**
+	 * @param $url
+	 * @return mixed
+	 */
+    public function getUrl($url): mixed
     {
         return GeneralUtility::getUrl($url);
     }
