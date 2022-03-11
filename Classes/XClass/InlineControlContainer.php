@@ -5,6 +5,7 @@ namespace Ideative\IdStockPictures\XClass;
 use Ideative\IdStockPictures\ConnectorInterface;
 use TYPO3\CMS\Core\Resource\Folder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\Page\JavaScriptModuleInstruction;
 
 /**
  * XClass the inline container to add a new button "Add media" for each connected service (Shutterstock, Unsplash, etc.)
@@ -56,7 +57,7 @@ class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineCon
                     );
                 }
             }
-            $output .= '<div class="form-group">' . $buttons . '</div>';
+            $output .= '<div class="form-group t3js-ideative-addon-inline-controls">' . $buttons . '</div>';
         }
         
         $this->includeAdditionalRequireJsModules();
@@ -116,6 +117,13 @@ class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineCon
                 ],
             ]
         );
+
+        $nameObject = $this->inlineStackProcessor->getCurrentStructureDomObjectIdPrefix($this->data['inlineFirstPid']);
+
+        $this->requireJsModules[] = JavaScriptModuleInstruction::forRequireJS(
+            'TYPO3/CMS/IdStockPictures/InlineControlContainerStockPictures'
+        )->instance($nameObject);
+
     }
 
 }
