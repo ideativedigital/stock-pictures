@@ -3,25 +3,24 @@
 namespace Ideative\IdStockPictures\Domain\Model;
 
 class SearchResult {
-    /**
-     * @var SearchResultItem[] Contains the search summary
-     */
-    public $search = [];
+    /** @var array SearchResultItem[] Contains the search summary */
+    public array $search = [];
 
     /** @var int */
-    public $page;
+    public int $page;
     
     /** @var int  */
-    public $totalCount = 0;
+    public int $totalCount = 0;
     
     /** @var array  */
-    public $data = [];
+    public array $data = [];
     
     /** @var bool  */
-    public $success = false;
+    public bool $success = false;
 
-    public $message = '';
+    /** @var string  */
+    public string $message = '';
     
     /** @var array  */
-    public $disabledFilters = [];
+    public array $disabledFilters = [];
 }

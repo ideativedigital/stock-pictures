@@ -3,10 +3,9 @@
 namespace Ideative\IdStockPictures\XClass;
 
 use Ideative\IdStockPictures\ConnectorInterface;
-use TYPO3\CMS\Backend\Routing\UriBuilder;
 use TYPO3\CMS\Core\Resource\Folder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Extbase\Object\ObjectManager;
+use TYPO3\CMS\Core\Page\JavaScriptModuleInstruction;
 
 /**
  * XClass the inline container to add a new button "Add media" for each connected service (Shutterstock, Unsplash, etc.)
@@ -14,7 +13,7 @@ use TYPO3\CMS\Extbase\Object\ObjectManager;
  * @package Ideative\IdStockPictures\XClass
  */
 class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineControlContainer {
-    const EXT_KEY = 'id_stock_pictures';
+    public const EXT_KEY = 'id_stock_pictures';
     
     /**
      * Generate a button that opens an element browser in a new window.
@@ -23,7 +22,7 @@ class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineCon
      * @param array $inlineConfiguration TCA inline configuration of the parent(!) field
      * @return string A HTML button that opens an element browser in a new window
      */
-    protected function renderPossibleRecordsSelectorTypeGroupDB(array $inlineConfiguration)
+    protected function renderPossibleRecordsSelectorTypeGroupDB(array $inlineConfiguration): string
     {
         // Generate the complete inline container using the parent
         $output = parent::renderPossibleRecordsSelectorTypeGroupDB($inlineConfiguration);
@@ -45,11 +44,10 @@ class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineCon
         ) {
             // Browse each service connector and add its corresponding button
             $registeredConnectors = $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS'][self::EXT_KEY]['connectors'];
-            $objectManager = GeneralUtility::makeInstance(ObjectManager::class);
 
             $buttons = '';
             foreach ($registeredConnectors as $connectorName => $connectorClassName) {
-                $connector = $objectManager->get($connectorClassName);
+                $connector = GeneralUtility::makeInstance($connectorClassName);
                 if (is_subclass_of($connector, ConnectorInterface::class)) {
                     $buttons .= $this->getAddButton(
                         $objectPrefix, 
@@ -59,7 +57,7 @@ class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineCon
                     );
                 }
             }
-            $output .= '<div class="form-group">' . $buttons . '</div>';
+            $output .= '<div class="form-group t3js-ideative-addon-inline-controls">' . $buttons . '</div>';
         }
         
         $this->includeAdditionalRequireJsModules();
@@ -75,7 +73,7 @@ class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineCon
      * @param string $connectorName
      * @return string
      */
-    public function getAddButton(string $objectPrefix, Folder $folder, ConnectorInterface $connector, string $connectorName)
+    public function getAddButton(string $objectPrefix, Folder $folder, ConnectorInterface $connector, string $connectorName): string
     {
         $buttonAttributes = [
             'data-file-irre-object' => htmlspecialchars($objectPrefix),
@@ -98,11 +96,12 @@ class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineCon
                 '</button>
                ';
     }
-    
-    /**
-     * Add Masonry JS library
-     */
-    public function includeAdditionalRequireJsModules() {
+
+	/**
+	 * Add Masonry JS library
+	 */
+    public function includeAdditionalRequireJsModules(): void
+    {
         $this->requireJsModules[] = 'TYPO3/CMS/IdStockPictures/AddStockPictureMedia';
         
         $pageRenderer = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Page\PageRenderer::class);
@@ -118,6 +117,13 @@ class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineCon
                 ],
             ]
         );
+
+        $nameObject = $this->inlineStackProcessor->getCurrentStructureDomObjectIdPrefix($this->data['inlineFirstPid']);
+
+        $this->requireJsModules[] = JavaScriptModuleInstruction::forRequireJS(
+            'TYPO3/CMS/IdStockPictures/InlineControlContainerStockPictures'
+        )->instance($nameObject);
+
     }
 
 }
