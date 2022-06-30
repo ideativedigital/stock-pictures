@@ -3,6 +3,7 @@
 namespace Ideative\IdStockPictures\XClass;
 
 use Ideative\IdStockPictures\ConnectorInterface;
+use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Resource\Folder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Page\JavaScriptModuleInstruction;
@@ -32,8 +33,9 @@ class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineCon
         $foreign_table = $inlineConfiguration['foreign_table'];
         $objectPrefix = $currentStructureDomObjectIdPrefix . '-' . $foreign_table;
         $backendUser = $this->getBackendUserAuthentication();
+        $currentPageId = $this->data['tableName'] === 'pages' ? $this->data['vanillaUid'] : $this->data['parentPageRow']['uid'];
         $folder = $backendUser->getDefaultUploadFolder(
-            $this->data['tableName'] === 'pages' ? $this->data['vanillaUid'] : $this->data['parentPageRow']['uid'],
+            $currentPageId,
             $this->data['tableName'],
             $this->data['fieldName']
         );
@@ -48,7 +50,7 @@ class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineCon
             $buttons = '';
             foreach ($registeredConnectors as $connectorName => $connectorClassName) {
                 $connector = GeneralUtility::makeInstance($connectorClassName);
-                if (is_subclass_of($connector, ConnectorInterface::class)) {
+                if ($this->isConnectorEnabled($connectorName) && is_subclass_of($connector, ConnectorInterface::class)) {
                     $buttons .= $this->getAddButton(
                         $objectPrefix, 
                         $folder,
@@ -63,6 +65,19 @@ class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineCon
         $this->includeAdditionalRequireJsModules();
         
         return $output;
+    }
+
+    /**
+     * Check if the given connector is enabled for the current table/field
+     * Each connector can be manually disabled using TSConfig in TCEFORM. See README for more info
+     * @param string $connectorName
+     * @return bool
+     */
+    public function isConnectorEnabled(string $connectorName): bool {
+        $currentPageId = $this->data['tableName'] === 'pages' ? $this->data['vanillaUid'] : $this->data['parentPageRow']['uid'];
+        $pagesTSconfig = BackendUtility::getPagesTSconfig($currentPageId);
+        $isConnectorEnabled = $pagesTSconfig['TCEFORM.'][$this->data['tableName'] . '.'][$this->data['fieldName'] . '.']['tx_idstockpictures.']['connectors.'][$connectorName . '.']['enabled'] ?? true;
+        return (bool)$isConnectorEnabled;
     }
 
     /**
