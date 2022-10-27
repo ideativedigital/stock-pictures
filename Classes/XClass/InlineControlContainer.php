@@ -33,7 +33,7 @@ class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineCon
         $foreign_table = $inlineConfiguration['foreign_table'];
         $objectPrefix = $currentStructureDomObjectIdPrefix . '-' . $foreign_table;
         $backendUser = $this->getBackendUserAuthentication();
-        $currentPageId = $this->data['tableName'] === 'pages' ? $this->data['vanillaUid'] : $this->data['parentPageRow']['uid'];
+        $currentPageId = $this->getCurrentPageUid();
         $folder = $backendUser->getDefaultUploadFolder(
             $currentPageId,
             $this->data['tableName'],
@@ -73,11 +73,31 @@ class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineCon
      * @param string $connectorName
      * @return bool
      */
-    public function isConnectorEnabled(string $connectorName): bool {
-        $currentPageId = $this->data['tableName'] === 'pages' ? $this->data['vanillaUid'] : $this->data['parentPageRow']['uid'];
-        $pagesTSconfig = BackendUtility::getPagesTSconfig($currentPageId);
-        $isConnectorEnabled = $pagesTSconfig['TCEFORM.'][$this->data['tableName'] . '.'][$this->data['fieldName'] . '.']['tx_idstockpictures.']['connectors.'][$connectorName . '.']['enabled'] ?? true;
+    public function isConnectorEnabled(string $connectorName): bool
+    {
+        $isConnectorEnabled = false;
+        if($currentPageId = $this->getCurrentPageUid()) {
+            $pagesTSconfig = BackendUtility::getPagesTSconfig($currentPageId);
+            $isConnectorEnabled = $pagesTSconfig['TCEFORM.'][$this->data['tableName'] . '.'][$this->data['fieldName'] . '.']['tx_idstockpictures.']['connectors.'][$connectorName . '.']['enabled'] ?? true;
+        }
         return (bool)$isConnectorEnabled;
+    }
+
+    protected function getCurrentPageUid(): ?int
+    {
+        $tableName = $this->data['tableName'] ?? '';
+        if ($tableName === 'pages') {
+            if ($vanillaUid = $this->data['vanillaUid'] ?? 0) {
+                return (int)$vanillaUid;
+            }
+        } else {
+            if ($parentRow = $this->data['parentPageRow'] ?? []) {
+                if(is_array($parentRow) && isset($parentRow['uid'])) {
+                    return (int)$parentRow['uid'];
+                }
+            }
+        }
+        return null;
     }
 
     /**
