@@ -1,64 +1,55 @@
 var __importDefault = this && this.__importDefault || function (e) {return e && e.__esModule ? e : {default: e}}
 
-define([
-    "require",
-    "exports",
-    "TYPO3/CMS/Core/DocumentService",
-    "sortablejs",
-    "TYPO3/CMS/Core/Event/RegularEvent",
-    "TYPO3/CMS/Backend/Utility"
-], (function (require, exports, documentService,  sortablejs, regularEvent, utility) {
-    var f;
-    r = __importDefault(sortablejs), function (e) {
-        e.controlContainer = ".t3js-ideative-addon-inline-controls"
-    }(f || (f = {}));
+import Sortable from "sortablejs";
+import documentService from "@typo3/core/document-service.js";
+import Utility from "@typo3/backend/utility.js";
 
-    class InlineControlContainerStockPictures {
-        constructor(e) {
-            this.container = null
-            documentService.ready().then(t => {
-                this.container = t.getElementById(e)
-                this.registerEvents()
-                this.toggleContainerControls(this.isBelowMax())
-            })
-        }
+var f = new Sortable(document.querySelector('.t3js-ideative-addon-inline-controls'))
 
-        registerEvents() {
-            document.addEventListener('change', (e) => {
-                this.toggleContainerControls(this.isBelowMax())
-            })
-        }
+export class InlineControlContainerStockPictures {
+  constructor(e) {
+    this.container = null
+    documentService.ready().then(t => {
+      this.container = t.getElementById(e)
+      this.registerEvents()
+      this.toggleContainerControls(this.isBelowMax())
+    })
+  }
 
-        isBelowMax() {
-            const e = this.getFormFieldForElements();
-            if (null === e) return !0;
-            if (void 0 !== TYPO3.settings.FormEngineInline.config[this.container.dataset.objectGroup]) {
-                if (utility.trimExplode(",", e.value).length >= TYPO3.settings.FormEngineInline.config[this.container.dataset.objectGroup].max) return false;
-                if (this.hasObjectGroupDefinedUniqueConstraints()) {
-                    const e = TYPO3.settings.FormEngineInline.unique[this.container.dataset.objectGroup];
-                    if (e.used.length >= e.max && e.max >= 0) return false
-                }
-            }
-            return true
-        }
+  registerEvents() {
+    document.addEventListener('change', (e) => {
+      this.toggleContainerControls(this.isBelowMax())
+    })
+  }
 
-        getFormFieldForElements() {
-            const e = document.getElementsByName(this.container.dataset.formField);
-            return e.length > 0 ? e[0] : null
-        }
-
-        hasObjectGroupDefinedUniqueConstraints() {
-            return void 0 !== TYPO3.settings.FormEngineInline.unique && void 0 !== TYPO3.settings.FormEngineInline.unique[this.container.dataset.objectGroup]
-        }
-
-        toggleContainerControls(e) {
-            const t = this.container.querySelector(f.controlContainer);
-            if (null === t) return;
-            t.querySelectorAll("button, a").forEach(t => {
-                t.style.display = e ? null : "none"
-            })
-        }
+  isBelowMax() {
+    const e = this.getFormFieldForElements();
+    if (null === e) return !0;
+    if (void 0 !== TYPO3.settings.FormEngineInline.config[this.container.dataset.objectGroup]) {
+      if (Utility.trimExplode(",", e.value).length >= TYPO3.settings.FormEngineInline.config[this.container.dataset.objectGroup].max) return false;
+      if (this.hasObjectGroupDefinedUniqueConstraints()) {
+        const e = TYPO3.settings.FormEngineInline.unique[this.container.dataset.objectGroup];
+        if (e.used.length >= e.max && e.max >= 0) return false
+      }
     }
+    return true
+  }
 
-    return InlineControlContainerStockPictures
-}))
+  getFormFieldForElements() {
+    const e = document.getElementsByName(this.container.dataset.formField);
+    return e.length > 0 ? e[0] : null
+  }
+
+  hasObjectGroupDefinedUniqueConstraints() {
+    return void 0 !== TYPO3.settings.FormEngineInline.unique && void 0 !== TYPO3.settings.FormEngineInline.unique[this.container.dataset.objectGroup]
+  }
+
+  toggleContainerControls(e) {
+    const t = this.container.querySelector(f.controlContainer);
+    if (null === t) return;
+    t.querySelectorAll("button, a").forEach(t => {
+      t.style.display = e ? null : "none"
+    })
+  }
+}
+
