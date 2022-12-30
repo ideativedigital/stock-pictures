@@ -1,24 +1,26 @@
-import * as $ from 'jquery';
+import $ from "jquery";
 import {MessageUtility} from "@typo3/backend/utility/message-utility.js";
 import NProgress from "nprogress";
 import AjaxRequest from "@typo3/core/ajax/ajax-request.js";
-import SecurityUtility from "@typo3/core/security-utility.js";
 import Modal from "@typo3/backend/modal.js";
 import Severity from "@typo3/backend/severity.js";
 import Icons from "@typo3/backend/icons.js";
-import * as masonry from '@ideative/id_stock_pictures/masonry.pkgd.min.js';
-import * as imagesLoaded from '@ideative/id_stock_pictures/imagesLoaded.pkgd.min.js';
+import * as Masonry from '@ideative/id_stock_pictures/masonry.pkgd.min.js';
+import * as imagesLoaded from '@ideative/id_stock_pictures/imagesLoaded.pkgd.min.js'; // available on window.imagesLoaded...
 
-var currentPage = 1
-var isLoading = false
-var debounceTimeout = 500
-var infiniteScrollThreshold = 1200
-var reachedPaginationEnd = false
-var securityUtility = new SecurityUtility()
+let currentPage = 1
+let isLoading = false
+const debounceTimeout = 500
+const infiniteScrollThreshold = 1200
+let reachedPaginationEnd = false
 
 // When clicking on the "Add media from XXX" button, show the search modal
-$.default(document).on('click', '.t3js-stockpicture-media-add-btn', t => {
-  triggerModal($.default(t.currentTarget))
+document.addEventListener('click', e => {
+  if (!e.target.closest('.t3js-stockpicture-media-add-btn')) {
+    // add button has not been clicked
+    return
+  }
+  triggerModal(e.target)
 })
 
 /**
@@ -28,61 +30,72 @@ $.default(document).on('click', '.t3js-stockpicture-media-add-btn', t => {
  */
 function renderItem (item) {
   // Create items hidden by default. We'll display them once they are loaded using imagesLoaded plugin
-  var $container = $.default('<div class="col-lg-4 result-item" style="display: none;" data-id="' + item.id + '"></div>')
-  $container.append('<img src="' + item.preview + '" class="img-fluid" />')
+  var container = document.createElement('div')
+  container.className = 'col-lg-4 result-item'
+  container.setAttribute('data-id', item.id)
+  container.style.display = 'none'
+  const img = document.createElement('img')
+  img.src = item.preview
+  img.class = 'img-fluid'
+  container.append(img)
 
   // Select the image when the user clicks on it
-  $container.on('click', function () {
+  container.addEventListener('click', function () {
     // First deselect any other image
-    Modal.currentModal.find('.result-item').removeClass('active')
+    Modal.currentModal.querySelector('.result-item').classList.remove('active')
     // Activate this one
-    $.default(this).addClass('active')
+    container.classList.add('active')
   })
 
-  return $container
+  return container
 }
 
 function renderList (items) {
-  const $resultsList = Modal.currentModal.find('.stock-pictures-results')
+  const resultsList = Modal.currentModal.querySelector('.stock-pictures-results')
   // Add each result item
   for (let index in items) {
     let item = items[index]
-    $resultsList.append(renderItem(item))
+    resultsList.append(renderItem(item))
   }
 
   // Trigger masonry everytime a new image is loaded
-  const grid = $resultsList[0]
-  imagesLoaded(grid, function () {
+  window.imagesLoaded(resultsList, function () {
     toggleLoading(false)
     // Display the new loaded images gracefully
-    $.default(grid).find('.result-item').fadeIn()
+    for (const item of resultsList.querySelectorAll('.result-item')) {
+      $(item).fadeIn()
+    }
 
     // init Isotope after all images have loaded
-    let msnry = new masonry(grid, {
+    console.log(Masonry)
+    console.log(Masonry.default)
+    console.log(Masonry.Masonry)
+    console.log(Masonry.masonry)
+    let msnry = new Masonry(resultsList, {
       itemSelector: '.result-item'
     })
   })
 }
 
 function toggleLoading(status) {
-  const $loadingContainer = Modal.currentModal.find('.loading-container')
+  const loadingContainer = Modal.currentModal.querySelector('.loading-container')
   isLoading = status
   if (status) {
     Icons.getIcon('spinner-circle', Icons.sizes.large).then((icon) => {
-      $loadingContainer.html(icon)
+      loadingContainer.innerHTML = icon
     })
   }
   else {
-    $loadingContainer.html('')
+    loadingContainer.innerHTML = ''
   }
 }
 
 function search (page = 1) {
-  const $resultsList = Modal.currentModal.find('.stock-pictures-results')
-  const $searchSummary = Modal.currentModal.find('.search-summary')
+  const resultsList = Modal.currentModal.querySelector('.stock-pictures-results')
+  const searchSummary = Modal.currentModal.querySelector('.search-summary')
 
   // Convert the form data into a JSON object
-  const form = Modal.currentModal.find('form')[0]
+  const form = Modal.currentModal.querySelector('form')
   var searchData = {};
   (new FormData(form)).forEach(function (value, key) {
     searchData[key] = value
@@ -91,7 +104,7 @@ function search (page = 1) {
   toggleLoading(true)
 
   // Enable all filters
-  $.default('[name="stockpictures-form"]')
+  $('[name="stockpictures-form"]')
     .find('input, select')
     .prop('disabled', '')
 
@@ -112,20 +125,20 @@ function search (page = 1) {
           // Else this is the infinite scroll so keep the previous items
           if (page == 1) {
             const keywordsLabel = typeof(searchData.q) !== 'undefined' && searchData.q ? ' for keywords <em>' + searchData.q + '</em>' : '';
-            $searchSummary.html('Found ' + data.result.totalCount + ' results' + keywordsLabel)
-            $resultsList.html('')
-            $resultsList.css({height: 'auto'})
+            searchSummary.innerHTML = 'Found ' + data.result.totalCount + ' results' + keywordsLabel
+            resultsList.innerHTML = ''
+            resultsList.style.height = 'auto'
           }
           renderList(data.result.data)
           toggleFilters(data.result)
         }
         else if (data.result.message) {
-          $searchSummary.html('<p class="text-danger">' + data.result.message + '</p>')
+          searchSummary.innerHTML = '<p class="text-danger">' + data.result.message + '</p>'
           toggleLoading(false)
         }
       } else {
-        $resultsList.html('')
-        $searchSummary.html('')
+        resultsList.innerHTML = ''
+        searchSummary.innerHTML = ''
         toggleLoading(false)
       }
     })
@@ -139,7 +152,7 @@ function toggleFilters(result) {
   if (result.disabledFilters && result.disabledFilters.length > 0) {
     // Disable each filter based on the AJAX response
     for (let i in result.disabledFilters) {
-      let $filterInput = $.default('[name="' + result.disabledFilters[i] + '"]');
+      let $filterInput = $('[name="' + result.disabledFilters[i] + '"]');
       $filterInput
         .val('')
         .prop('disabled', 'disabled')
@@ -149,23 +162,27 @@ function toggleFilters(result) {
 
 /**
  * Build the search form based on the JSON object passed in "data-available-filters" of the "Add media" button
- * @param $target
+ * @param target
  * @returns {*}
  */
-function generateSearchForm ($target) {
-  let availableFilters = $target.data('available-filters')
-  let placeholder = $target.data('placeholder')
-  let connector = $target.data('connector')
+function generateSearchForm (target) {
+  let availableFilters = JSON.parse(target.getAttribute('data-available-filters'))
+  let placeholder = target.getAttribute('data-placeholder')
+  let connector = target.getAttribute('data-connector')
 
-  const $searchContainer = $.default('<form name="stockpictures-form"></form>')
+  const searchContainer = document.createElement('form')
+  searchContainer.name = 'stockpictures-form'
 
   // Add a hidden input containing the connector name : that means the AJAX call will search in this service's API
-  const $connectorInput = $.default('<input type="hidden" name="connector">').val(connector)
-  $searchContainer.append($connectorInput)
+  const connectorInput = document.createElement('input')
+  connectorInput.type = 'hidden'
+  connectorInput.name = 'connector'
+  connectorInput.value = connector
+  searchContainer.append(connectorInput)
 
   // Add the text search input
-  const $searchInput = $.default('<div class="form-group"></div>').append(
-    $.default('<input name="q" id="search-term">')
+  const $searchInput = $('<div class="form-group"></div>').append(
+    $('<input name="q" id="search-term">')
       .attr('type', 'text')
       .attr('class', 'form-control stockpictures-media-url')
       .attr('placeholder', placeholder)
@@ -181,12 +198,12 @@ function generateSearchForm ($target) {
         search(1)
       }, debounceTimeout))
   )
-  $searchContainer.append($searchInput)
+  searchContainer.append($searchInput[0])
 
-  const $filtersContainer = generateSearchFilters(availableFilters)
-  $searchContainer.append($filtersContainer)
+  const filtersContainer = generateSearchFilters(availableFilters)
+  searchContainer.append(filtersContainer)
 
-  return $searchContainer
+  return searchContainer
 }
 
 /**
@@ -194,19 +211,20 @@ function generateSearchForm ($target) {
  * @returns {*}
  */
 function generateSearchFilters (availableFilters) {
-  const $filtersContainer = $.default('<div class="row"></div>')
+  const filtersContainer = document.createElement('div')
+  filtersContainer.className = 'row'
   // Add select filters
-  for (let filterType in availableFilters) {
+  for (let filterType of Object.keys(availableFilters)) {
     let filterData = availableFilters[filterType]
-    let $formGroup = $.default('<div class="form-group col-md-3"><label>' + filterData.label + '</label></div>')
+    let $formGroup = $('<div class="form-group col-md-3"><label>' + filterData.label + '</label></div>')
 
     if (filterData.tag && filterData.tag === 'checkbox') {
       // Trigger the search when changing a checkbox
       for (let index in filterData.options) {
         const optionValue = filterData.options[index].value
         const optionLabel = filterData.options[index].label
-        let $element = $.default('<div class="form-check form-switch">')
-        let $input = $.default('<input type="checkbox" name="' + filterType + '[' + index + ']" class="form-check-input" value="' + optionValue + '">')
+        let $element = $('<div class="form-check form-switch">')
+        let $input = $('<input type="checkbox" name="' + filterType + '[' + index + ']" class="form-check-input" value="' + optionValue + '">')
           .on('change', (e) => {
             currentPage = 1
             search(1)
@@ -218,7 +236,7 @@ function generateSearchFilters (availableFilters) {
       }
     } else {
       // Trigger the search when changing a select
-      let $select = $.default('<select name="' + filterType + '" class="form-control"></select>')
+      let $select = $('<select name="' + filterType + '" class="form-control"></select>')
         .on('change', (e) => {
           currentPage = 1
           search(1)
@@ -231,13 +249,13 @@ function generateSearchFilters (availableFilters) {
       }
       $formGroup.append($select)
     }
-    $filtersContainer.append($formGroup)
+    filtersContainer.append($formGroup[0])
   }
-  return $filtersContainer
+  return filtersContainer
 }
 
 function generateResultsContainer () {
-  const $resultsContainer = $.default('<div id="stockpictures-search-results" class="mt-3"></div>')
+  const $resultsContainer = $('<div id="stockpictures-search-results" class="mt-3"></div>')
   $resultsContainer.append('<div class="search-summary mb-5"></div>')
   $resultsContainer.append('<div class="row stock-pictures-results"></div>')
   $resultsContainer.append('<div class="loading-container text-center"></div>')
@@ -245,13 +263,13 @@ function generateResultsContainer () {
 }
 
 function submit (connector, targetFolder, fileIrreObject) {
-  const $selectedImage = Modal.currentModal.find('.result-item.active')
-  const $submitButton = Modal.currentModal.find('.btn.btn-primary')
+  const selectedImage = Modal.currentModal.querySelector('.result-item.active')
+  const submitButton = Modal.currentModal.querySelector('.btn.btn-primary')
 
   // Set a loading state on the submit button
   Icons.getIcon('spinner-circle', Icons.sizes.small).then((icon) => {
-    $submitButton.prepend(icon)
-    $submitButton.attr('disabled', 'disabled')
+    submitButton.prepend(icon)
+    submitButton.setAttribute('disabled', 'disabled')
   })
 
   NProgress.start()
@@ -259,7 +277,7 @@ function submit (connector, targetFolder, fileIrreObject) {
   new AjaxRequest(TYPO3.settings.ajaxUrls.id_stock_pictures_download)
     .post({
       connector: connector,
-      id: $selectedImage.data('id'),
+      id: selectedImage.getAttribute('data-id'),
       targetFolder: targetFolder
     }).then(async e => {
     const data = await e.resolve()
@@ -287,42 +305,42 @@ function submit (connector, targetFolder, fileIrreObject) {
             active: !0
           }
         ])
-        .on('confirm.button.ok', () => {
+        .addEventListener('confirm.button.ok', () => {
           confirm.modal('hide')
         })
     }
-    $submitButton.find('.icon').remove()
-    $submitButton.removeAttr('disabled')
+    submitButton.querySelector('.icon').remove()
+    submitButton.removeAttribute('disabled')
     NProgress.done()
   })
     .catch(e => {
       console.error(e)
-      $submitButton.find('.icon').remove()
-      $submitButton.removeAttr('disabled')
+      submitButton.querySelector('.icon').remove()
+      submitButton.removeAttribute('disabled')
       NProgress.done()
     })
 }
 
 /**
  * Opens the modal search box
- * @param $target
+ * @param target
  */
-function triggerModal ($target) {
-  let title = $target.data('btn-submit')
-  let targetFolder = $target.data('target-folder')
-  let fileIrreObject = $target.data('file-irre-object')
-  let cancel = $target.data('btn-cancel')
-  let connector = $target.data('connector')
+function triggerModal (target) {
+  let title = target.getAttribute('data-btn-submit')
+  let targetFolder = target.getAttribute('data-target-folder')
+  let fileIrreObject = target.getAttribute('data-file-irre-object')
+  let cancel = target.getAttribute('data-btn-cancel')
+  let connector = target.getAttribute('data-connector')
 
-  const $searchForm = generateSearchForm($target)
+  const $searchForm = generateSearchForm(target)
   const $resultsContainer = generateResultsContainer()
 
-  let modalContent = $.default('<div>').attr('class', 'form-control-wrap')
+  let modalContent = $('<div>').attr('class', 'form-control-wrap')
     .append($searchForm)
     .append($resultsContainer)
 
   Modal.advanced({
-    title: $target.attr('title'),
+    title: target.getAttribute('title'),
     content: modalContent,
     severity: Severity.notice,
     size: Modal.sizes.full,
@@ -345,22 +363,21 @@ function triggerModal ($target) {
       }
     ]
   })
-    .on('shown.bs.modal', e => {
+    .addEventListener('shown.bs.modal', e => {
       // Focus on the search input when opening the modal
-      $.default(e.currentTarget).find('input[name="q"]').first().focus()
+      $(e.currentTarget).find('input[name="q"]').first().focus()
+      initInfiniteScroll()
     })
-
-  initInfiniteScroll()
 }
 
 /**
  * Initializes the loading of a new results page when we reach the bottom end of the results scroll area
  */
 function initInfiniteScroll () {
-  Modal.currentModal.find('.modal-body').on('scroll', debounce((e) => {
+  Modal.currentModal.querySelector('.modal-body').addEventListener('scroll', debounce((e) => {
     if (!isLoading && !reachedPaginationEnd) {
-      var bottomScrollPosition = $.default(e.target).scrollTop() + $.default(e.target).height()
-      var totalHeight = $.default(e.target).prop('scrollHeight')
+      var bottomScrollPosition = $(e.target).scrollTop() + $(e.target).height()
+      var totalHeight = $(e.target).prop('scrollHeight')
       if ((totalHeight - bottomScrollPosition < infiniteScrollThreshold) && !isLoading) {
         currentPage += 1
         console.log('Moving to page ' + currentPage)
