@@ -289,6 +289,7 @@ function submit (connector, targetFolder, fileIrreObject) {
         table: 'sys_file',
         uid: data.file
       }
+      NProgress.done()
       MessageUtility.send(e)
       // ... and hide the search box
       Modal.dismiss()
