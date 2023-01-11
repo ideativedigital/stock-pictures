@@ -1,6 +1,6 @@
 <?php
-
-defined('TYPO3_MODE') or die();
+// TYPO3_MODE for TYPO3 v10 and below
+defined('TYPO3_MODE') or defined('TYPO3') or die();
 
 
 $GLOBALS['TBE_STYLES']['skins']['id_stock_pictures'] = [
@@ -9,4 +9,3 @@ $GLOBALS['TBE_STYLES']['skins']['id_stock_pictures'] = [
         'css' => 'EXT:id_stock_pictures/Resources/Public/Css/'
     ]
 ];
-    

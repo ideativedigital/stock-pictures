@@ -3,31 +3,30 @@
 namespace Ideative\IdStockPictures\XClass;
 
 use Ideative\IdStockPictures\ConnectorInterface;
+use TYPO3\CMS\Backend\Form\NodeFactory;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Resource\Folder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Page\JavaScriptModuleInstruction;
+use TYPO3\CMS\Extbase\Utility\DebuggerUtility;
 
 /**
  * XClass the inline container to add a new button "Add media" for each connected service (Shutterstock, Unsplash, etc.)
- * Class InlineControlContainer
+ * Class FilesControlContainer
  * @package Ideative\IdStockPictures\XClass
  */
-class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineControlContainer {
+class FilesControlContainer extends \TYPO3\CMS\Backend\Form\Container\FilesControlContainer {
     public const EXT_KEY = 'id_stock_pictures';
-    
-    /**
-     * Generate a button that opens an element browser in a new window.
-     * For group/db there is no way to use a "selector" like a <select>|</select>-box.
-     *
-     * @param array $inlineConfiguration TCA inline configuration of the parent(!) field
-     * @return string A HTML button that opens an element browser in a new window
-     */
-    protected function renderPossibleRecordsSelectorTypeGroupDB(array $inlineConfiguration): string
+
+    public function __construct(NodeFactory $nodeFactory, array $data)
     {
-        // Generate the complete inline container using the parent
-        $output = parent::renderPossibleRecordsSelectorTypeGroupDB($inlineConfiguration);
-        
+        parent::__construct($nodeFactory, $data);
+    }
+
+    protected function getFileSelectors(array $inlineConfiguration, array $allowedFileTypes): array
+    {
+        $controls = parent::getFileSelectors($inlineConfiguration, $allowedFileTypes);
+
         // Prepare some variables that should be passed so the "Add media from XXX" button can be properly generated
         $currentStructureDomObjectIdPrefix = $this->inlineStackProcessor->getCurrentStructureDomObjectIdPrefix($this->data['inlineFirstPid']);
         $foreign_table = $inlineConfiguration['foreign_table'];
@@ -39,7 +38,7 @@ class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineCon
             $this->data['tableName'],
             $this->data['fieldName']
         );
-        
+
         if (
             $folder instanceof Folder
             && $folder->getStorage()->checkUserActionPermission('add', 'File')
@@ -52,19 +51,19 @@ class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineCon
                 $connector = GeneralUtility::makeInstance($connectorClassName);
                 if ($this->isConnectorEnabled($connectorName) && is_subclass_of($connector, ConnectorInterface::class)) {
                     $buttons .= $this->getAddButton(
-                        $objectPrefix, 
+                        $objectPrefix,
                         $folder,
                         $connector,
                         $connectorName
                     );
                 }
             }
-            $output .= '<div class="form-group t3js-ideative-addon-inline-controls">' . $buttons . '</div>';
+            $controls[] .= '<div class="form-group t3js-ideative-addon-inline-controls">' . $buttons . '</div>';
         }
-        
+
         $this->includeAdditionalRequireJsModules();
-        
-        return $output;
+
+        return $controls;
     }
 
     /**
@@ -117,28 +116,28 @@ class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineCon
             'data-available-filters' => GeneralUtility::jsonEncodeForHtmlAttribute($connector->getAvailableFilters())
         ];
         $buttonAttributes = array_merge($buttonAttributes, $connector->getAddButtonAttributes());
-        
+
         $additionalAttributes = '';
         foreach ($buttonAttributes as $property => $value) {
             $additionalAttributes .= sprintf(' %s="%s" ', $property, $value);
         }
-        
+
         return '<button type="button" class="btn btn-default t3js-stockpicture-media-add-btn"
                         ' . $additionalAttributes . '
                     >
                     ' . $connector->getAddButtonIcon() . '
                     ' . $connector->getAddButtonLabel() .
-                '</button>
+            '</button>
                ';
     }
 
-	/**
-	 * Add Masonry JS library
-	 */
+    /**
+     * Add Masonry JS library
+     */
     public function includeAdditionalRequireJsModules(): void
     {
-        $this->requireJsModules[] = 'TYPO3/CMS/IdStockPictures/AddStockPictureMedia';
-        
+        $this->javaScriptModules[] = JavaScriptModuleInstruction::create('@ideative/id_stock_pictures/AddStockPictureMedia.js');
+
         $pageRenderer = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Page\PageRenderer::class);
         $pageRenderer->addRequireJsConfiguration(
             [
@@ -154,11 +153,6 @@ class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineCon
         );
 
         $nameObject = $this->inlineStackProcessor->getCurrentStructureDomObjectIdPrefix($this->data['inlineFirstPid']);
-
-        $this->requireJsModules[] = JavaScriptModuleInstruction::forRequireJS(
-            'TYPO3/CMS/IdStockPictures/InlineControlContainerStockPictures'
-        )->instance($nameObject);
-
+        $this->javaScriptModules[] = JavaScriptModuleInstruction::create('@ideative/id_stock_pictures/InlineControlContainerStockPictures.js')->instance($nameObject);
     }
-
 }
