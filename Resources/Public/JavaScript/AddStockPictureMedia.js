@@ -5,8 +5,8 @@ import AjaxRequest from "@typo3/core/ajax/ajax-request.js";
 import Modal from "@typo3/backend/modal.js";
 import Severity from "@typo3/backend/severity.js";
 import Icons from "@typo3/backend/icons.js";
-import * as Masonry from '@ideative/id_stock_pictures/masonry.pkgd.min.js';
-import * as imagesLoaded from '@ideative/id_stock_pictures/imagesLoaded.pkgd.min.js'; // available on window.imagesLoaded...
+import '@ideative/id_stock_pictures/masonry.pkgd.min.js';
+import * as imagesLoaded from '@ideative/id_stock_pictures/imagesLoaded.pkgd.min.js';
 
 let currentPage = 1
 let isLoading = false
@@ -67,10 +67,6 @@ function renderList (items) {
     }
 
     // init Isotope after all images have loaded
-    console.log(Masonry)
-    console.log(Masonry.default)
-    console.log(Masonry.Masonry)
-    console.log(Masonry.masonry)
     let msnry = new Masonry(resultsList, {
       itemSelector: '.result-item'
     })
@@ -266,60 +262,62 @@ function submit (connector, targetFolder, fileIrreObject) {
   const selectedImage = Modal.currentModal.querySelector('.result-item.active')
   const submitButton = Modal.currentModal.querySelector('.btn.btn-primary')
 
-  // Set a loading state on the submit button
-  Icons.getIcon('spinner-circle', Icons.sizes.small).then((icon) => {
-    submitButton.prepend(icon)
-    submitButton.setAttribute('disabled', 'disabled')
-  })
+  if (selectedImage) {
+    // Set a loading state on the submit button
+    Icons.getIcon('spinner-circle', Icons.sizes.small).then((icon) => {
+      submitButton.innerHTML = icon + ' ' + submitButton.innerHTML
+      submitButton.setAttribute('disabled', 'disabled')
+    })
 
-  NProgress.start()
+    NProgress.start()
 
-  new AjaxRequest(TYPO3.settings.ajaxUrls.id_stock_pictures_download)
-    .post({
-      connector: connector,
-      id: selectedImage.getAttribute('data-id'),
-      targetFolder: targetFolder
-    }).then(async e => {
-    const data = await e.resolve()
-    if (data.file) {
-      // If file was successfully downloaded and added to the FAL, trigger the creation of the file reference
-      const e = {
-        actionName: 'typo3:foreignRelation:insert',
-        objectGroup: fileIrreObject,
-        table: 'sys_file',
-        uid: data.file
+    new AjaxRequest(TYPO3.settings.ajaxUrls.id_stock_pictures_download)
+        .post({
+          connector: connector,
+          id: selectedImage.getAttribute('data-id'),
+          targetFolder: targetFolder
+        }).then(async e => {
+      const data = await e.resolve()
+      if (data.file) {
+        // If file was successfully downloaded and added to the FAL, trigger the creation of the file reference
+        const e = {
+          actionName: 'typo3:foreignRelation:insert',
+          objectGroup: fileIrreObject,
+          table: 'sys_file',
+          uid: data.file
+        }
+        NProgress.done()
+        MessageUtility.send(e)
+        // ... and hide the search box
+        Modal.dismiss()
+      } else {
+        const confirm = Modal.confirm(
+            'ERROR',
+            data.error,
+            Severity.error,
+            [
+              {
+                text: TYPO3.lang['button.ok'] || 'OK',
+                btnClass: 'btn-' + Severity.getCssClass(Severity.error),
+                name: 'ok',
+                active: !0
+              }
+            ])
+            .addEventListener('confirm.button.ok', () => {
+              confirm.modal('hide')
+            })
       }
-      NProgress.done()
-      MessageUtility.send(e)
-      // ... and hide the search box
-      Modal.dismiss()
-    } else {
-      const confirm = Modal.confirm(
-        'ERROR',
-        data.error,
-        Severity.error,
-        [
-          {
-            text: TYPO3.lang['button.ok'] || 'OK',
-            btnClass: 'btn-' + Severity.getCssClass(Severity.error),
-            name: 'ok',
-            active: !0
-          }
-        ])
-        .addEventListener('confirm.button.ok', () => {
-          confirm.modal('hide')
-        })
-    }
-    submitButton.querySelector('.icon').remove()
-    submitButton.removeAttribute('disabled')
-    NProgress.done()
-  })
-    .catch(e => {
-      console.error(e)
       submitButton.querySelector('.icon').remove()
       submitButton.removeAttribute('disabled')
       NProgress.done()
     })
+        .catch(e => {
+          console.error(e)
+          submitButton.querySelector('.icon').remove()
+          submitButton.removeAttribute('disabled')
+          NProgress.done()
+        })
+  }
 }
 
 /**
