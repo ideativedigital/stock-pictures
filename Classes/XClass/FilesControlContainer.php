@@ -137,21 +137,6 @@ class FilesControlContainer extends \TYPO3\CMS\Backend\Form\Container\FilesContr
     public function includeAdditionalRequireJsModules(): void
     {
         $this->javaScriptModules[] = JavaScriptModuleInstruction::create('@ideative/id_stock_pictures/AddStockPictureMedia.js');
-
-        $pageRenderer = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Page\PageRenderer::class);
-        $pageRenderer->addRequireJsConfiguration(
-            [
-                'paths' => [
-                    'masonry' => '../typo3conf/ext/' . self::EXT_KEY . '/Resources/Public/Contrib/masonry.pkgd.min',
-                    'imagesLoaded' => '../typo3conf/ext/' . self::EXT_KEY . '/Resources/Public/Contrib/imagesloaded.pkgd.min',
-                ],
-                'shim' => [
-                    'masonry' => ['exports' => 'masonry'],
-                    'imagesLoaded' => ['exports' => 'imagesLoaded'],
-                ],
-            ]
-        );
-
         $nameObject = $this->inlineStackProcessor->getCurrentStructureDomObjectIdPrefix($this->data['inlineFirstPid']);
         $this->javaScriptModules[] = JavaScriptModuleInstruction::create('@ideative/id_stock_pictures/InlineControlContainerStockPictures.js')->instance($nameObject);
     }

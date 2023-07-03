@@ -5,8 +5,9 @@ import AjaxRequest from "@typo3/core/ajax/ajax-request.js";
 import Modal from "@typo3/backend/modal.js";
 import Severity from "@typo3/backend/severity.js";
 import Icons from "@typo3/backend/icons.js";
-import '@ideative/id_stock_pictures/masonry.pkgd.min.js';
-import * as imagesLoaded from '@ideative/id_stock_pictures/imagesLoaded.pkgd.min.js';
+
+import Masonry from 'masonry-layout';
+import imagesLoaded from 'imagesloaded';
 
 let currentPage = 1
 let isLoading = false
@@ -42,7 +43,9 @@ function renderItem (item) {
   // Select the image when the user clicks on it
   container.addEventListener('click', function () {
     // First deselect any other image
-    Modal.currentModal.querySelector('.result-item').classList.remove('active')
+    Modal.currentModal.querySelectorAll('.result-item').forEach(function (item) {
+      item.classList.remove('active');
+    });
     // Activate this one
     container.classList.add('active')
   })
@@ -59,7 +62,7 @@ function renderList (items) {
   }
 
   // Trigger masonry everytime a new image is loaded
-  window.imagesLoaded(resultsList, function () {
+  imagesLoaded(resultsList, function () {
     toggleLoading(false)
     // Display the new loaded images gracefully
     for (const item of resultsList.querySelectorAll('.result-item')) {

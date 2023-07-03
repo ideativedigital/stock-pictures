@@ -3,9 +3,4 @@
 defined('TYPO3_MODE') or defined('TYPO3') or die();
 
 
-$GLOBALS['TBE_STYLES']['skins']['id_stock_pictures'] = [
-    'name' => 'id_stock_pictures',
-    'stylesheetDirectories' => [
-        'css' => 'EXT:id_stock_pictures/Resources/Public/Css/'
-    ]
-];
+$GLOBALS['TYPO3_CONF_VARS']['BE']['stylesheets']['id_stock_pictures'] = 'EXT:id_stock_pictures/Resources/Public/Css/';
