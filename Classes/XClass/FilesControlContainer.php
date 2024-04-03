@@ -1,14 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Ideative\IdStockPictures\XClass;
 
 use Ideative\IdStockPictures\ConnectorInterface;
 use TYPO3\CMS\Backend\Form\NodeFactory;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
+use TYPO3\CMS\Core\Resource\Filter\FileExtensionFilter;
 use TYPO3\CMS\Core\Resource\Folder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Page\JavaScriptModuleInstruction;
-use TYPO3\CMS\Extbase\Utility\DebuggerUtility;
 
 /**
  * XClass the inline container to add a new button "Add media" for each connected service (Shutterstock, Unsplash, etc.)
@@ -23,9 +25,9 @@ class FilesControlContainer extends \TYPO3\CMS\Backend\Form\Container\FilesContr
         parent::__construct($nodeFactory, $data);
     }
 
-    protected function getFileSelectors(array $inlineConfiguration, array $allowedFileTypes): array
+    protected function getFileSelectors(array $inlineConfiguration, FileExtensionFilter $fileExtensionFilter): array
     {
-        $controls = parent::getFileSelectors($inlineConfiguration, $allowedFileTypes);
+        $controls = parent::getFileSelectors($inlineConfiguration, $fileExtensionFilter);
 
         // Prepare some variables that should be passed so the "Add media from XXX" button can be properly generated
         $currentStructureDomObjectIdPrefix = $this->inlineStackProcessor->getCurrentStructureDomObjectIdPrefix($this->data['inlineFirstPid']);
@@ -44,7 +46,7 @@ class FilesControlContainer extends \TYPO3\CMS\Backend\Form\Container\FilesContr
             && $folder->getStorage()->checkUserActionPermission('add', 'File')
         ) {
             // Browse each service connector and add its corresponding button
-            $registeredConnectors = $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS'][self::EXT_KEY]['connectors'];
+            $registeredConnectors = $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS'][self::EXT_KEY]['connectors'] ?? [];
 
             $buttons = '';
             foreach ($registeredConnectors as $connectorName => $connectorClassName) {
