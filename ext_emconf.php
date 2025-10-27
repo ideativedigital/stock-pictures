@@ -25,9 +25,9 @@ $EM_CONF[$_EXTKEY] = [
     'title' => 'Stock Pictures library',
     'description' => 'Allows backend users to select assets from as stock pictures library from the TYPO3 backend',
     'category' => 'templates',
-    'author' => 'Julien Henchoz',
+    'author' => 'Ideative',
     'author_email' => 'typo3@ideative.ch',
-    'author_company' => 'Idéative',
+    'author_company' => 'Ideative',
     'shy' => '',
     'priority' => '',
     'module' => '',
@@ -38,10 +38,10 @@ $EM_CONF[$_EXTKEY] = [
     'modify_tables' => '',
     'clearCacheOnLoad' => 1,
     'lockType' => '',
-    'version' => '12.0.2',
+    'version' => '14.0.0',
     'constraints' => [
         'depends' => [
-            'typo3' => '12.4.0-12.4.99'
+            'typo3' => '14.0.0-14.9.99'
         ],
         'conflicts' => [
         ],

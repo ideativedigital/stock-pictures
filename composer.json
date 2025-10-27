@@ -1,5 +1,6 @@
 {
 	"name": "ideative/stock-pictures",
+	"version": "14.0.0",
 	"type": "typo3-cms-extension",
 	"description": "Allows backend users to select stock pictures from various online services",
 	"autoload": {
@@ -9,18 +10,18 @@
 	},
 	"authors": [
 		{
-			"name": "Julien Henchoz",
+			"name": "Ideative",
 			"email": "typo3@ideative.ch",
 			"role": "Developer",
 			"homepage": "https://www.ideative.ch"
 		}
 	],
 	"require": {
-		"typo3/cms-core": "^12.4"
+		"typo3/cms-core": "^14.0"
 	},
 	"extra": {
 		"typo3/cms": {
-			"extension-key": "id_stock_pictures"
+			"extension-key": "stock-pictures"
 		}
 	},
 	"homepage": "https://github.com/ideativedigital/stock-pictures",

@@ -28,10 +28,10 @@ class SearchController
         $requestConnector = $request->getQueryParams()['connector'] ?? null;
         // List of GET params that should not be transmitted to the search function
         $paramsBlackList = ['route', 'token', 'connector'];
-        
+
         $result = null;
         if ($requestConnector) {
-	        $connectorClassName = $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['id_stock_pictures']['connectors'][$requestConnector] ?? '';
+	        $connectorClassName = $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['stock-pictures']['connectors'][$requestConnector] ?? '';
 	        if ($connectorClassName) {
 		        $params = array_filter($request->getQueryParams(), static function ($param) use ($paramsBlackList) {
 			        return !in_array($param, $paramsBlackList, true);
@@ -43,7 +43,7 @@ class SearchController
 		        }
 	        }
         }
-        
+
         $data = ['result' => $result];
         $response = GeneralUtility::makeInstance(ResponseFactory::class)->createResponse()
             ->withHeader('Content-Type', 'application/json; charset=utf-8');

@@ -110,7 +110,7 @@ function search (page = 1) {
   // Make the "page" parameter available in the query params we'll be sending
   searchData.page = currentPage
 
-  new AjaxRequest(TYPO3.settings.ajaxUrls.id_stock_pictures_search)
+  new AjaxRequest(TYPO3.settings.ajaxUrls.stock_pictures_search)
     .withQueryArguments(searchData)
     .get()
     .then(async function (response) {
@@ -274,13 +274,16 @@ function submit (connector, targetFolder, fileIrreObject) {
 
     NProgress.start()
 
-    new AjaxRequest(TYPO3.settings.ajaxUrls.id_stock_pictures_download)
+    new AjaxRequest(TYPO3.settings.ajaxUrls.stock_pictures_download)
         .post({
           connector: connector,
           id: selectedImage.getAttribute('data-id'),
           targetFolder: targetFolder
         }).then(async e => {
       const data = await e.resolve()
+
+      console.info(data.file);
+
       if (data.file) {
         // If file was successfully downloaded and added to the FAL, trigger the creation of the file reference
         const e = {
@@ -307,7 +310,7 @@ function submit (connector, targetFolder, fileIrreObject) {
               }
             ])
             .addEventListener('confirm.button.ok', () => {
-              confirm.modal('hide')
+              this.currentModal.hideModal('hide')
             })
       }
       submitButton.querySelector('.icon').remove()

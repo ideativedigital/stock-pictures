@@ -29,8 +29,6 @@ class DownloadController implements LoggerAwareInterface
      */
     protected array $paramsBlackList = [ 'route', 'token', 'connector' ];
 
-
-
     public function __construct()
     {
         $this->resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
@@ -49,7 +47,7 @@ class DownloadController implements LoggerAwareInterface
 
         $result = [];
         if ($requestConnector) {
-	        $connectorClassName = $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['id_stock_pictures']['connectors'][$requestConnector] ?? '';
+	        $connectorClassName = $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['stock-pictures']['connectors'][$requestConnector] ?? '';
 	        if ($connectorClassName) {
 		        $params = $this->getFilteredParams($request->getParsedBody());
 				$connector = GeneralUtility::makeInstance($connectorClassName);
@@ -65,7 +63,7 @@ class DownloadController implements LoggerAwareInterface
 				        } else {
 					        $result['error'] = LocalizationUtility::translate(
 						        'error.file_download_failed',
-						        'id_stock_pictures',
+						        'stock-pictures',
 						        [ucfirst($requestConnector)]
 					        );
 					        if ($fileInfo['errors']) {
@@ -73,12 +71,12 @@ class DownloadController implements LoggerAwareInterface
                             }
 				        }
 			        } else {
-				        $result['error'] = LocalizationUtility::translate('error.no_file_given', 'id_stock_pictures');
+				        $result['error'] = LocalizationUtility::translate('error.no_file_given', 'stock-pictures');
 			        }
 		        }
 	        }
         } else {
-            $result['error'] = LocalizationUtility::translate('error.invalid_connector_given', 'id_stock_pictures');
+            $result['error'] = LocalizationUtility::translate('error.invalid_connector_given', 'stock-pictures');
         }
 
         $response = GeneralUtility::makeInstance(ResponseFactory::class)->createResponse()
@@ -137,8 +135,12 @@ class DownloadController implements LoggerAwareInterface
         $folder = $this->getResourceFactory()->getFolderObjectFromCombinedIdentifier($targetFolder);
 
         $file = null;
-        $fileName = $connectorName . '_' . $id . '.' . $fileInfo['extension'];
-        
+        if (isset($fileInfo['filename'])) {
+            $fileName = $fileInfo['filename']. '.' . $fileInfo['extension'];;
+        } else {
+            $fileName = $connectorName . '_' . $id . '.' . $fileInfo['extension'];
+        }
+
         if (!$folder->hasFile($fileName)) {
             try {
                 $fileData = $this->getUrl($fileInfo['url']);
@@ -147,9 +149,12 @@ class DownloadController implements LoggerAwareInterface
                     $tmpFile = tmpfile();
                     $path = stream_get_meta_data($tmpFile)['uri'];
                     fwrite($tmpFile, $fileData);
-                    
+
                     // Add the downloaded file to FAL with its remote name
                     $file = $folder->addFile($path, $fileName);
+                    if (is_array($fileInfo['metadata'])) {
+                        $file->getMetaData()->add($fileInfo['metadata'])->save();
+                    }
                     fclose($tmpFile);
                 } else {
                     $this->logger->critical(sprintf(

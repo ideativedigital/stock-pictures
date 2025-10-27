@@ -12,7 +12,7 @@ module.exports = {
     output: {
         // Where the CSS is saved to
         path: path.resolve(__dirname, 'Resources/Public/Css'),
-        publicPath: "/typo3conf/ext/id_stock_pictures/Resources/Public/Css"
+        publicPath: "/typo3conf/ext/stock-pictures/Resources/Public/Css"
     },
 
     resolve: {

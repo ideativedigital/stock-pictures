@@ -10,4 +10,4 @@ call_user_func(function ($extKey) {
         'className' => \Ideative\IdStockPictures\XClass\FilesControlContainer::class,
     );
 
-}, 'id_stock_pictures');
+}, 'stock-pictures');
